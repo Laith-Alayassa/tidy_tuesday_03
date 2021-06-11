@@ -84,7 +84,7 @@ fishing %>%
   facet_wrap(vars(lake)) +
   labs(title = "Fish Distribution by lake",
        x = "",
-       y = "Total Fish") +
+       y = "Total production (lbs)") +
   theme(legend.position = 'none')
 ```
 
@@ -101,10 +101,70 @@ fishing %>%
   facet_wrap(vars(lake), scales = "free_y") +
   labs(title = "Fish Distribution by lake",
        x = "",
-       y = "Total Fish") +
+       y = "Total production (lbs)") +
   theme(legend.position = 'none')
 ```
 
 
 The trend of decline since around 1930's till the 70's still holds generally speaking, but with some irregularities that need deeper investigation. 
 
+To explore that seeminglt odd increase in lake Michigan, I want to look at how different species of fish changed population:
+
+```{r}
+fishing %>% 
+  filter(lake == "Michigan") %>% 
+  group_by(year, species) %>% 
+  summarise(total_values = sum(values, na.rm = TRUE)) %>%
+  ggplot(aes(x = year,
+             y = total_values)) +
+  geom_area(aes(fill = species))+
+  labs(title = "Fish Distribution by lake",
+       x = "",
+       y = "Total production (lbs)")
+```
+Altohugh this is not the easiest to read, but we are fortunate to easily find the the only spiking species causing all the increase for this lake is Alewife. To better understand its effect I will try to combine all species except for Alewife and see if there is a pattern:
+
+```{r}
+fishing_lumped <- fishing %>% 
+  filter(lake == "Michigan") %>% 
+  group_by(species) %>% 
+  summarise(total_weight = sum(values, na.rm = TRUE)) %>% 
+  mutate(fish_grp = fct_lump(species, n = 1, w = total_weight))
+```
+
+```{r}
+fishing %>% 
+  inner_join(fishing_lumped, by = "species") %>% 
+  filter(lake == "Michigan") %>% 
+  group_by(year, fish_grp) %>% 
+  summarise(total_values = sum(values, na.rm = TRUE)) %>%
+  ggplot(aes(x = year,
+             y = total_values)) +
+  geom_area(aes(fill = fish_grp))+
+  labs(title = "Fish Distribution in lake Michigan",
+       x = "",
+       y = "Total production (lbs)") +
+  theme(legend.title = element_blank())
+  
+```
+
+We can see the the increase in lake michigan that we noticed was nearly entirely caused by the increase in the numbers of Alewife species, at the same time, we see a decrease in the numbers of all other species suggesting imbalance in the eco system. To see the number if Alewife before the spike I will change the geom to something more readable: 
+
+```{r}
+fishing %>% 
+  inner_join(fishing_lumped, by = "species") %>% 
+  filter(lake == "Michigan") %>% 
+  group_by(year, fish_grp) %>% 
+  summarise(total_values = sum(values, na.rm = TRUE)) %>%
+  ggplot(aes(x = year,
+             y = total_values)) +
+  geom_line(aes(color = fish_grp))+
+  labs(title = "Fish Distribution in lake Michigan",
+       x = "",
+       y = "Total production (lbs)") +
+  theme(legend.title = element_blank())
+  
+```
+
+
+We see that the Alewife was not native to this lake and was only came before the 1960's, and we can see a corresponding decrease in the numbers of all other species when it came. However, this graph doesn't explain the continuing decrease in numbers of all species after the decline of Alewife numbers.
