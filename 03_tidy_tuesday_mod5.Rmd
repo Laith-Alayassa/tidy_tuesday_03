@@ -1,0 +1,110 @@
+---
+title: 'Tidy Tuesday #3'
+author: "Laith Alayassa"
+output: 
+  html_document:
+    df_print: paged
+    code_download: true
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+```
+
+```{r libraries}
+library(tidyverse)     # for graphing and data cleaning
+library(lubridate)     # for date manipulation
+library(ggthemes)      # for even more plotting themes
+theme_set(theme_minimal()) # My favorite ggplot() theme :)
+```
+
+```{r}
+# Read in the data for the week
+
+fishing <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-08/fishing.csv')
+stocked <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-08/stocked.csv')
+
+```
+
+<!-- ```{r} -->
+<!-- fishing %>%  -->
+<!--   filter(species == "Alewife" | species == "Rainbow Smelt") %>%  -->
+<!--   ggplot(aes(x= year, -->
+<!--              y = values, -->
+<!--              fill = ("Alewife" = "red")) + -->
+<!--   geom_col() -->
+<!--   # facet_wrap(vars(species), scales = "free_y") + -->
+<!--   # theme(legend.position = "none") -->
+
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- fishing %>%  -->
+<!--   mutate(not_alewife = ifelse(species == "Alewife", yes = 0,no = values)) %>%  -->
+<!--   summarise(total_not_alewife = sum(not_alewife, na.rm = TRUE)) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- fishing %>%  -->
+<!--   group_by(species, year) %>%  -->
+<!--   summarise(total_weight = sum(values, na.rm = TRUE)) %>%  -->
+<!--   ungroup() %>%  -->
+<!--   summarise(mean_weight = mean(total_weight)) # finds mean -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- fishing %>%  -->
+<!--   group_by(species, year) %>%  -->
+<!--   summarise(total_weight = sum(values, na.rm = TRUE)) %>%  -->
+<!--   filter (total_weight > 5751.785	) %>%  -->
+<!--   ggplot(aes(x = ye= -->
+<!-- ``` -->
+
+
+
+Exploring the total amount of fish in lakes by year:
+
+```{r}
+fishing %>% 
+  group_by(year) %>% 
+  summarise(total_fish = sum(values , na.rm = TRUE)) %>% 
+  ggplot(aes(x = year,
+             y = total_fish)) +
+  geom_line()
+```
+
+
+Then I wanteed to see if this distribution from the previous graph follows for all lakes or if there are different or odd patterns:
+```{r}
+fishing %>% 
+  group_by(year, lake) %>% 
+  summarise(total_fish = sum(values , na.rm = TRUE)) %>% 
+  ggplot(aes(x = year,
+             y = total_fish)) +
+  geom_area(fill = '#125d98') +
+  facet_wrap(vars(lake)) +
+  labs(title = "Fish Distribution by lake",
+       x = "",
+       y = "Total Fish") +
+  theme(legend.position = 'none')
+```
+
+I immediately notice that there are different patterns, especially with Lake Michigan which is the only one that seems to have increasing numbers around the 70's, unlike other lakes that seem to have decreasing numbers, however, to better see the patterns I think it would be a good idea to free the y-axis since I am more intereseted in the trend and not the actual numbers:
+
+
+```{r}
+fishing %>% 
+  group_by(year, lake) %>% 
+  summarise(total_fish = sum(values , na.rm = TRUE)) %>% 
+  ggplot(aes(x = year,
+             y = total_fish)) +
+  geom_area(fill = '#125d98') +
+  facet_wrap(vars(lake), scales = "free_y") +
+  labs(title = "Fish Distribution by lake",
+       x = "",
+       y = "Total Fish") +
+  theme(legend.position = 'none')
+```
+
+
+The trend of decline since around 1930's till the 70's still holds generally speaking, but with some irregularities that need deeper investigation. 
+
